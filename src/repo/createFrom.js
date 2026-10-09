@@ -1,10 +1,3 @@
-import Form from "../Schema/FormModel";
+import Lead from "../Schema/FormModel.js";
 
-export const createFrom = async ({ body }) => {
-    try {
-        const form = await Form.create({ body });
-        return form;
-    } catch(error) {
-        throw error;
-    }
-}
+export const createFrom = async (leadData) => Lead.create(leadData);

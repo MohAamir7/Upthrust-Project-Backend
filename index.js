@@ -1,24 +1,30 @@
-import express from 'express';
 import mongoose from 'mongoose';
-import { MONGODB_DB_NAME, MONGODB_URI, PORT } from './src/Config/serverConfig.js';
-import apiLeads from './src/routes/apiLeads.js';
-
-const app = express();
-
-app.use(express.json({ limit: '16kb' }));
-
-app.use('/api/Leads', apiLeads);
-app.use('/api', (req, res) => res.status(404).json({ ok: false, message: 'Not found' }));
-app.get('/', (req, res) => {
-  res.send('Hello, Express!');
-});
+import {
+  ADMIN_PASSWORD,
+  JWT_SECRET,
+  MONGODB_DB_NAME,
+  MONGODB_URI,
+  PORT,
+} from './src/Config/serverConfig.js';
+import { createApp } from './src/Config/appConfig.js';
 
 async function startServer() {
-  if (!MONGODB_URI) {
-    throw new Error('MONGODB_URI must be set before starting the server.');
+  const missing = [];
+  if (!MONGODB_URI) missing.push('MONGODB_URI');
+  if (!ADMIN_PASSWORD) missing.push('ADMIN_PASSWORD');
+  if (!JWT_SECRET) missing.push('JWT_SECRET');
+  if (missing.length) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+  if (ADMIN_PASSWORD.length < 16) {
+    throw new Error('ADMIN_PASSWORD must be at least 16 characters long.');
+  }
+  if (JWT_SECRET.length < 24) {
+    throw new Error('JWT_SECRET must be at least 24 characters long.');
   }
 
   await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB_NAME });
+  const app = createApp();
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
@@ -26,5 +32,5 @@ async function startServer() {
 
 startServer().catch((error) => {
   console.error('Server startup failed:', error.message);
-  process.exitCode = 1;
+  process.exit(1);
 });

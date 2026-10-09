@@ -1,26 +1,28 @@
-import { createFormService } from "../FormService/FormService";
-export const createForm = async (req, res) => {
-    try {
-        const response = await createFormService({
-            body: req.body.body
-        });
+import { createFormService } from "../FormService/FormService.js";
 
-        return res.status(201).json({
-            success: true,
-            data: response,
-            message: 'Form created successfully'
-        })
-    } catch(error) {
-        console.log(error);
-        if(error.status) {
-            return res.status(error.status).json({
-                message: error.message,
-                success: false
-            });
-        }
-        return res.status(500).json({
-            message: 'Internal server error',
-            success: false
-        });
-    }
-}
+export const createForm = async (req, res) => {
+  const { name, email, company, message, website } = req.validatedBody;
+
+  if (website.trim()) {
+    return res.status(201).json({
+      ok: true,
+      message: "Lead submitted successfully.",
+    });
+  }
+
+  try {
+    const lead = await createFormService({ name, email, company, message });
+
+    return res.status(201).json({
+      ok: true,
+      message: "Lead submitted successfully.",
+      leadId: lead.id,
+    });
+  } catch (error) {
+    console.error("Failed to save lead:", error);
+    return res.status(500).json({
+      ok: false,
+      message: "Unable to save the lead.",
+    });
+  }
+};

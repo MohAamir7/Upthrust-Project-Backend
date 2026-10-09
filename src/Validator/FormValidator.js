@@ -1,21 +1,24 @@
 
-export const validate = (schema)=>{
-    // it return a validate middleware
-     
+export const validate = (schema) => (req, res, next) => {
+  const result = schema.safeParse(req.body);
 
-    return async (req,res,next)=>{
-        try{
-            console.log(req.body);
-            schema.parse(req.body);
-            next();
-        }catch{
-            return res.status(400).json({
-                // error:error.errors,
-                success:false,
-                messsage:"Validation Failed"
-                
-            })
+  if (!result.success) {
+    const errors = {};
 
-        }
+    for (const issue of result.error.issues) {
+      const field = issue.path[0];
+      if (typeof field !== "string") continue;
+      errors[field] ??= [];
+      errors[field].push(issue.message);
     }
-}
+
+    return res.status(400).json({
+      ok: false,
+      message: "Please correct the submitted fields.",
+      errors,
+    });
+  }
+
+  req.validatedBody = result.data;
+  return next();
+};
